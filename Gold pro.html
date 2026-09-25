@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gold Digger Deluxe - Master Edition</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #030508;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Modern Top Bar HUD */
+    #top-hud {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-left {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .hud-pill {
+      background: rgba(13, 20, 36, 0.88);
+      border: 1.5px solid rgba(255, 213, 79, 0.65);
+      border-radius: 18px;
+      padding: 4px 10px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .energy-bar-track {
+      width: 65px;
+      height: 9px;
+      background: #2b0d0d;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid #ff5252;
+    }
+    .energy-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff5252, #ffd700);
+      transition: width 0.15s ease-out;
+    }
+    .xp-bar-track {
+      width: 50px;
+      height: 9px;
+      background: #0d2b1f;
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid #2ecc71;
+    }
+    .xp-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #2ecc71, #a8f5c3);
+      transition: width 0.15s ease-out;
+    }
+    .btn-camp-hud {
+      pointer-events: auto;
+      background: linear-gradient(180deg, #ffd54f 0%, #ff8f00 100%);
+      color: #3e2723;
+      border: 1.5px solid #fff;
+      border-radius: 16px;
+      font-weight: 900;
+      font-size: 12px;
+      padding: 6px 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      letter-spacing: 0.5px;
+    }
+    .btn-camp-hud:active {
+      transform: scale(0.95);
+    }
+
+    /* Notification Banner */
+    #banner {
+      position: absolute;
+      top: 55px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #ffd54f;
+      color: #ffd54f;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 20;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    #banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Pop-up Modals */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-box {
+      width: 94%;
+      max-width: 520px;
+      max-height: 86vh;
+      background: linear-gradient(180deg, #182236 0%, #0d1322 100%);
+      border: 2.5px solid #ffc107;
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: #fff;
+    }
+    .modal-header {
+      background: rgba(0,0,0,0.3);
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid rgba(255,255,255,0.1);
+    }
+    .modal-header h2 {
+      font-size: 18px;
+      color: #ffd54f;
+    }
+    .close-btn {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .tab-bar {
+      display: flex;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px 6px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: #ffd54f;
+      border-bottom: 3px solid #ffd54f;
+      background: rgba(255, 213, 79, 0.08);
+    }
+    .modal-content {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .card-item {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .card-info {
+      flex: 1;
+    }
+    .card-info h4 {
+      color: #ffd54f;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+    .card-info p {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .btn-buy {
+      background: linear-gradient(180deg, #ffd54f 0%, #ff8f00 100%);
+      color: #3e2723;
+      border: none;
+      border-radius: 10px;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 7px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-buy:active {
+      transform: scale(0.95);
+    }
+    .control-hint {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Top Navigation HUD -->
+    <div id="top-hud">
+      <div class="hud-left">
+        <div class="hud-pill">💰 <span id="hud-money">0</span></div>
+        <div class="hud-pill">⭐ Lv.<span id="hud-level">1</span>
+          <div class="xp-bar-track">
+            <div id="hud-xp-fill" class="xp-bar-fill"></div>
+          </div>
+        </div>
+        <div class="hud-pill">⛏️ <span id="hud-depth">0m</span></div>
+        <div class="hud-pill">🎒 <span id="hud-bag">0/12</span></div>
+        <div class="hud-pill">
+          ⚡
+          <div class="energy-bar-track">
+            <div id="hud-energy-fill" class="energy-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-camp-hud" onclick="openMenu('tools')">SURFACE CAMP</button>
+    </div>
+
+    <div id="banner">Backpack Full! Climb up to sell!</div>
+    <div class="control-hint">Swipe/Drag anywhere to dig • Space / Tap jump to leap</div>
+
+    <!-- Hub Pop-up Window -->
+    <div id="game-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 id="modal-title">Surface Camp & Hub</h2>
+          <button class="close-btn" onclick="closeMenu()">✕</button>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('tools')">Pickaxes</button>
+          <button class="tab-btn" onclick="switchTab('supplies')">Supplies</button>
+          <button class="tab-btn" onclick="switchTab('perks')">Skills</button>
+          <button class="tab-btn" onclick="switchTab('inventory')">Sell Loot</button>
+          <button class="tab-btn" onclick="switchTab('outfits')">Wardrobe</button>
+          <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+        </div>
+        <div class="modal-content" id="modal-tab-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. SYNTHESIZED SOUND EFFECTS & BGM (Web Audio API)
+       ========================================================================= */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.bgmEnabled = true;
+        this.bgmTrack = 'cavern';
+        this.soundMode = 'crisp';
+        this.bgmStep = 0;
+        this.bgmTimer = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        if (this.bgmEnabled && !this.bgmTimer) {
+          this.startBGM();
+        }
+      }
+      playClink() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        if (this.soundMode === 'heavy') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(260 + Math.random() * 60, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+        } else if (this.soundMode === 'laser') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.16, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        } else {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(700 + Math.random() * 320, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(140, this.ctx.currentTime + 0.08);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        }
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+      playGem() {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.05);
+          gain.gain.setValueAtTime(0.18, now + i * 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.28);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.05);
+          osc.stop(now + i * 0.05 + 0.28);
+        });
+      }
+      playRumble() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(28, this.ctx.currentTime + 0.25);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.25);
+      }
+      playJump() {
+        if (!this.enabled) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(440, this.ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+      playFanfare() {
+        if (!this.enabled) return;
+        this.init();
+        const notes = [440, 554, 659, 880];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + idx * 0.08);
+          osc.stop(this.ctx.currentTime + idx * 0.08 + 0.36);
+        });
+      }
+      startBGM() {
+        if (this.bgmTimer) clearInterval(this.bgmTimer);
+        this.bgmTimer = setInterval(() => {
+          if (!this.bgmEnabled || !this.ctx || this.ctx.state === 'suspended') return;
+          this.stepBGM();
+        }, 280);
+      }
+      stepBGM() {
+        const notesCavern = [130.81, 155.56, 174.61, 196.00, 220.00, 196.00, 155.56, 110.00];
+        const notesGroove = [196.00, 220.00, 261.63, 293.66, 329.63, 293.66, 261.63, 220.00];
+        const notesAmbient = [110.00, 110.00, 146.83, 146.83, 164.81, 164.81, 130.81, 130.81];
+
+        let selected = notesCavern;
+        if (this.bgmTrack === 'groove') selected = notesGroove;
+        if (this.bgmTrack === 'ambient') selected = notesAmbient;
+
+        const freq = selected[this.bgmStep % selected.length];
+        this.bgmStep++;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.4);
+      }
+    }
+    const audio = new SoundEngine();
+
+    /* =========================================================================
+       2. TILE DEFINITIONS & VECTOR TEXTURE ENGINE
+       ========================================================================= */
+    const TILE_SIZE = 54;
+    const WORLD_COLS = 60;
+    const WORLD_ROWS = 400;
+    const SURFACE_ROW = 5;
+
+    const TILES = {
+      AIR: 0,
+      LADDER: 1,
+      DIRT: 2,
+      DIRT_FOSSIL: 3,
+      CLAY: 4,
+      STONE: 5,
+      HARDSTONE: 6,
+      OBSIDIAN: 7,
+      BOULDER: 8,
+      COPPER: 10,
+      IRON: 11,
+      GOLD: 12,
+      EMERALD: 13,
+      RUBY: 14,
+      DIAMOND: 15,
+      CRYSTAL: 16,
+      CHEST: 20
+    };
+
+    const ORE_DATA = {
+      [TILES.COPPER]:  { name: 'Copper Vein', value: 8,   color: '#e67e22', shine: '#f39c12' },
+      [TILES.IRON]:    { name: 'Iron Ore',    value: 18,  color: '#95a5a6', shine: '#ecf0f1' },
+      [TILES.GOLD]:    { name: 'Pure Gold',   value: 45,  color: '#f1c40f', shine: '#fff59d' },
+      [TILES.EMERALD]: { name: 'Emerald',     value: 95,  color: '#2ecc71', shine: '#a8f5c3' },
+      [TILES.RUBY]:    { name: 'Ruby Gem',    value: 180, color: '#e74c3c', shine: '#ffb3ba' },
+      [TILES.DIAMOND]: { name: 'Diamond',     value: 360, color: '#00d2d3', shine: '#ffffff' },
+      [TILES.CRYSTAL]: { name: 'Void Crystal',value: 650, color: '#a29bfe', shine: '#ffffff' },
+      [TILES.CHEST]:   { name: 'Gold Chest',  value: 400, color: '#b8860b', shine: '#ffe066' }
+    };
+
+    const JUNK_ITEMS = [
+      { name: 'Old Boot', value: 5, icon: '👢' },
+      { name: 'Rusty Tin Can', value: 4, icon: '🥫' },
+      { name: 'Dinosaur Bone', value: 25, icon: '🦴' },
+      { name: 'Ammonite Fossil', value: 65, icon: '🐚' },
+      { name: 'Ancient Roman Coin', value: 110, icon: '🪙' },
+      { name: 'Petrified Skull', value: 190, icon: '💀' },
+      { name: 'Golden Pocketwatch', value: 310, icon: '⏱️' }
+    ];
+
+    /* TIERED TOOLS & UPGRADABLE DRILLS */
+    const TOOLS = [
+      { name: 'Weathered Wood Pick', basePower: 1.0, baseSpeed: 1.0, cost: 0, tier: 1 },
+      { name: 'Forged Steel Pickaxe', basePower: 1.6, baseSpeed: 1.35, cost: 250, tier: 2 },
+      { name: 'Titanium Pickaxe', basePower: 2.4, baseSpeed: 1.7, cost: 850, tier: 3 },
+      { name: 'Gilded Royal Pick', basePower: 3.5, baseSpeed: 2.1, cost: 2400, tier: 4 },
+      { name: 'Diamond Rotary Drill', basePower: 5.2, baseSpeed: 2.8, cost: 6800, tier: 5 },
+      { name: 'Plasma Arc Cutter', basePower: 8.0, baseSpeed: 3.8, cost: 18000, tier: 6 },
+      { name: 'Antimatter Extractor', basePower: 12.5, baseSpeed: 5.0, cost: 50000, tier: 7 }
+    ];
+
+    const OUTFITS = [
+      { id: 'prospector', name: 'Classic Prospector', hat: '#fbc02d', shirt: '#d32f2f', pants: '#1976d2', beard: '#78350f', type: 'bib_overalls', cost: 0 },
+      { id: 'diver', name: 'Deep Sea Diver', hat: '#cfd8dc', shirt: '#37474f', pants: '#263238', beard: '#000000', type: 'dive_helmet', cost: 600 },
+      { id: 'lava', name: 'Lava Vanguard', hat: '#ff3d00', shirt: '#bf360c', pants: '#212121', beard: '#dd2c00', type: 'fire_armor', cost: 1800 },
+      { id: 'cyber', name: 'Cyber Pioneer', hat: '#00e5ff', shirt: '#263238', pants: '#37474f', beard: '#00bcd4', type: 'cyber_visor', cost: 4500 },
+      { id: 'golden', name: 'Golden Champion', hat: '#ffd700', shirt: '#ffa000', pants: '#4e342e', beard: '#e65100', type: 'royal_gold', cost: 12000 }
+    ];
+
+    const GRAPHICS_MODES = ['cartoon', 'realistic', 'classic'];
+    let currentGraphicsMode = 'cartoon';
+    let gameDifficulty = 'adventurer';
+
+    const tileCache = {};
+
+    function prebakeTileTextures() {
+      const bake = (id, renderFn) => {
+        const c = document.createElement('canvas');
+        c.width = TILE_SIZE;
+        c.height = TILE_SIZE;
+        const cx = c.getContext('2d');
+        renderFn(cx);
+        tileCache[id] = c;
+      };
+
+      const isRealistic = (currentGraphicsMode === 'realistic');
+      const isClassic = (currentGraphicsMode === 'classic');
+
+      bake(TILES.DIRT, (cx) => {
+        if (isRealistic) {
+          cx.fillStyle = '#3e2723';
+          cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+          cx.fillStyle = '#4e342e';
+          cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+          cx.fillStyle = 'rgba(0,0,0,0.25)';
+          cx.fillRect(6, 6, 16, 16);
+          cx.fillRect(28, 24, 18, 18);
+        } else if (isClassic) {
+          cx.fillStyle = '#6d4c41';
+          cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+          cx.fillStyle = '#8d6e63';
+          cx.fillRect(0, 0, TILE_SIZE, 4);
+        } else {
+          cx.fillStyle = '#4e342e';
+          cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+          cx.fillStyle = '#6d4c41';
+          cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+          cx.fillStyle = '#8d6e63';
+          cx.fillRect(2, 2, TILE_SIZE - 4, 5);
+          cx.fillStyle = '#3e2723';
+          cx.beginPath();
+          cx.arc(14, 18, 4, 0, Math.PI * 2);
+          cx.fill();
+        }
+      });
+
+      bake(TILES.DIRT_FOSSIL, (cx) => {
+        cx.drawImage(tileCache[TILES.DIRT], 0, 0);
+        cx.fillStyle = '#fff9c4';
+        cx.beginPath();
+        cx.arc(TILE_SIZE/2, TILE_SIZE/2, 5, 0, Math.PI * 2);
+        cx.fill();
+        drawStarSparkle(cx, TILE_SIZE/2, TILE_SIZE/2, 4);
+      });
+
+      bake(TILES.CLAY, (cx) => {
+        cx.fillStyle = '#7f2812';
+        cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+        cx.fillStyle = '#b7472a';
+        cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        cx.fillStyle = '#d86649';
+        cx.fillRect(2, 2, TILE_SIZE - 4, 5);
+      });
+
+      bake(TILES.STONE, (cx) => {
+        cx.fillStyle = '#334155';
+        cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+        cx.fillStyle = '#64748b';
+        cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        cx.fillStyle = '#94a3b8';
+        cx.fillRect(2, 2, TILE_SIZE - 4, 5);
+      });
+
+      bake(TILES.HARDSTONE, (cx) => {
+        cx.fillStyle = '#0f172a';
+        cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+        cx.fillStyle = '#334155';
+        cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        cx.fillStyle = '#475569';
+        cx.fillRect(2, 2, TILE_SIZE - 4, 5);
+      });
+
+      bake(TILES.OBSIDIAN, (cx) => {
+        cx.fillStyle = '#0f0e26';
+        cx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+        cx.fillStyle = '#1e1b4b';
+        cx.fillRect(2, 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        cx.fillStyle = '#3730a3';
+        cx.fillRect(2, 2, TILE_SIZE - 4, 5);
+      });
+
+      bake(TILES.LADDER, (cx) => {
+        cx.fillStyle = '#8d5b2e';
+        cx.fillRect(8, 0, 6, TILE_SIZE);
+        cx.fillRect(TILE_SIZE - 14, 0, 6, TILE_SIZE);
+        cx.fillStyle = '#b07238';
+        for (let i = 8; i < TILE_SIZE; i += 13) {
+          cx.fillRect(8, i, TILE_SIZE - 16, 4);
+        }
+      });
+
+      bake(TILES.BOULDER, (cx) => {
+        cx.beginPath();
+        cx.arc(TILE_SIZE/2, TILE_SIZE/2, TILE_SIZE/2 - 2, 0, Math.PI * 2);
+        cx.fillStyle = '#475569';
+        cx.fill();
+        cx.lineWidth = 3;
+        cx.strokeStyle = '#1e293b';
+        cx.stroke();
+        cx.beginPath();
+        cx.arc(TILE_SIZE/2 - 4, TILE_SIZE/2 - 4, 10, 0, Math.PI * 2);
+        cx.fillStyle = '#94a3b8';
+        cx.fill();
+      });
+
+      Object.keys(ORE_DATA).forEach((tileKey) => {
+        bake(tileKey, (cx) => {
+          cx.drawImage(tileCache[TILES.DIRT], 0, 0);
+          const ore = ORE_DATA[tileKey];
+
+          if (isRealistic) {
+            cx.fillStyle = ore.color;
+            cx.fillRect(TILE_SIZE/2 - 10, TILE_SIZE/2 - 8, 20, 16);
+            cx.fillStyle = ore.shine;
+            cx.fillRect(TILE_SIZE/2 - 8, TILE_SIZE/2 - 6, 8, 8);
+          } else {
+            cx.beginPath();
+            cx.arc(TILE_SIZE/2, TILE_SIZE/2, 13, 0, Math.PI * 2);
+            cx.fillStyle = ore.color;
+            cx.fill();
+
+            cx.beginPath();
+            cx.arc(TILE_SIZE/2 - 3, TILE_SIZE/2 - 3, 7, 0, Math.PI * 2);
+            cx.fillStyle = ore.shine;
+            cx.fill();
+            drawStarSparkle(cx, TILE_SIZE/2 + 4, TILE_SIZE/2 - 4, 5);
+          }
+        });
+      });
+    }
+
+    function drawStarSparkle(cx, x, y, s) {
+      cx.fillStyle = '#ffffff';
+      cx.beginPath();
+      cx.moveTo(x, y - s);
+      cx.lineTo(x + s * 0.3, y - s * 0.3);
+      cx.lineTo(x + s, y);
+      cx.lineTo(x + s * 0.3, y + s * 0.3);
+      cx.lineTo(x, y + s);
+      cx.lineTo(x - s * 0.3, y + s * 0.3);
+      cx.lineTo(x - s, y);
+      cx.lineTo(x - s * 0.3, y - s * 0.3);
+      cx.closePath();
+      cx.fill();
+    }
+
+    /* =========================================================================
+       3. WORLD GENERATOR & HIDDEN CACHE VAULTS
+       ========================================================================= */
+    const worldGrid = [];
+
+    function initWorldMatrix() {
+      for (let r = 0; r < WORLD_ROWS; r++) {
+        worldGrid[r] = [];
+        for (let c = 0; c < WORLD_COLS; c++) {
+          if (r < SURFACE_ROW) {
+            worldGrid[r][c] = TILES.AIR;
+          } else if (r === SURFACE_ROW) {
+            worldGrid[r][c] = (c === Math.floor(WORLD_COLS/2)) ? TILES.LADDER : TILES.DIRT;
+          } else {
+            const depth = r - SURFACE_ROW;
+            const rand = Math.random();
+
+            let base = TILES.DIRT;
+            if (depth > 25) base = TILES.CLAY;
+            if (depth > 70) base = TILES.STONE;
+            if (depth > 150) base = TILES.HARDSTONE;
+            if (depth > 250) base = TILES.OBSIDIAN;
+
+            if (depth <= 60 && rand < 0.16) {
+              worldGrid[r][c] = TILES.DIRT_FOSSIL;
+            } else if (Math.random() < 0.04 && depth > 4) {
+              worldGrid[r][c] = TILES.BOULDER;
+            } else if (depth > 180 && rand < 0.035) {
+              worldGrid[r][c] = TILES.CRYSTAL;
+            } else if (depth > 120 && rand < 0.045) {
+              worldGrid[r][c] = TILES.DIAMOND;
+            } else if (depth > 75 && rand < 0.065) {
+              worldGrid[r][c] = TILES.RUBY;
+            } else if (depth > 40 && rand < 0.085) {
+              worldGrid[r][c] = TILES.EMERALD;
+            } else if (depth > 18 && rand < 0.12) {
+              worldGrid[r][c] = TILES.GOLD;
+            } else if (depth > 6 && rand < 0.17) {
+              worldGrid[r][c] = TILES.IRON;
+            } else if (rand < 0.22) {
+              worldGrid[r][c] = TILES.COPPER;
+            } else {
+              worldGrid[r][c] = base;
+            }
+          }
+        }
+      }
+
+      carveSecretCave(14, 30, 6, 4);
+      carveSecretCave(34, 85, 7, 5);
+      carveSecretCave(18, 160, 8, 5);
+      carveSecretCave(38, 260, 9, 6);
+    }
+
+    function carveSecretCave(cx, cy, width, height) {
+      for (let r = cy; r < cy + height; r++) {
+        for (let c = cx; c < cx + width; c++) {
+          if (r < WORLD_ROWS && c < WORLD_COLS) {
+            worldGrid[r][c] = TILES.AIR;
+          }
+        }
+      }
+      if (cy + height - 1 < WORLD_ROWS && cx + Math.floor(width/2) < WORLD_COLS) {
+        worldGrid[cy + height - 1][cx + Math.floor(width/2)] = TILES.CHEST;
+      }
+    }
+
+    function getTile(gx, gy) {
+      if (gy < 0 || gy >= WORLD_ROWS || gx < 0 || gx >= WORLD_COLS) return TILES.OBSIDIAN;
+      return worldGrid[gy][gx];
+    }
+
+    function setTile(gx, gy, val) {
+      if (gy >= 0 && gy < WORLD_ROWS && gx >= 0 && gx < WORLD_COLS) {
+        worldGrid[gy][gx] = val;
+      }
+    }
+
+    function isSolid(tile) {
+      return tile !== TILES.AIR && tile !== TILES.LADDER;
+    }
+
+    /* Fixed Particle and Popup Pools */
+    const MAX_PARTICLES = 40;
+    const particlePool = Array.from({ length: MAX_PARTICLES }, () => ({
+      active: false, x: 0, y: 0, vx: 0, vy: 0, size: 4, color: '#fff', life: 0
+    }));
+
+    const MAX_POPUPS = 12;
+    const popupPool = Array.from({ length: MAX_POPUPS }, () => ({
+      active: false, x: 0, y: 0, text: '', color: '#fff', alpha: 0, vy: 0
+    }));
+
+    function spawnParticles(x, y, color) {
+      let count = 6;
+      for (let i = 0; i < MAX_PARTICLES && count > 0; i++) {
+        const p = particlePool[i];
+        if (!p.active) {
+          p.active = true;
+          p.x = x;
+          p.y = y;
+          p.vx = (Math.random() - 0.5) * 5;
+          p.vy = (Math.random() - 0.7) * 5;
+          p.color = color;
+          p.size = Math.random() * 4 + 3;
+          p.life = 1.0;
+          count--;
+        }
+      }
+    }
+
+    function spawnPopup(x, y, text, color = '#ffd54f') {
+      for (let i = 0; i < MAX_POPUPS; i++) {
+        const p = popupPool[i];
+        if (!p.active) {
+          p.active = true;
+          p.x = x;
+          p.y = y;
+          p.text = text;
+          p.color = color;
+          p.alpha = 1.0;
+          p.vy = -1.2;
+          break;
+        }
+      }
+    }
+
+    /* =========================================================================
+       4. GAME STATE, LEVELING & INVENTORY
+       ========================================================================= */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      money: 0,
+      xp: 0,
+      level: 1,
+      skillPoints: 0,
+      depth: 0,
+      maxDepthReached: 0,
+      energy: 100,
+      maxEnergy: 100,
+      bagCapacity: 12,
+      inventory: [],
+      toolIndex: 0,
+      toolHoneLevel: 0, // 0 to 10
+      // Skills
+      skillMagnet: 0,
+      skillVein: 0,
+      skillStamina: 0,
+      skillCrit: 0,
+      // Consumables
+      dynamiteCount: 1,
+      warpCount: 0,
+      lanternOilTimer: 0,
+      // Wardrobe
+      unlockedOutfits: ['prospector'],
+      outfitIndex: 0,
+      // Pet
+      hasPet: false,
+      petType: 'terrier',
+      petTimer: 0,
+      // Screen & Camera
+      combo: 0,
+      comboTimer: 0,
+      screenShake: 0,
+      camX: 0,
+      camY: 0
+    };
+
+    const player = {
+      gx: Math.floor(WORLD_COLS / 2),
+      gy: SURFACE_ROW,
+      visualX: Math.floor(WORLD_COLS / 2) * TILE_SIZE,
+      visualY: SURFACE_ROW * TILE_SIZE,
+      facing: 1,
+      isDigging: false,
+      digProgress: 0,
+      digTarget: null,
+      armAngle: 0,
+      isClimbing: false,
+      moveCooldown: 0,
+      happyTimer: 0,
+      isJumping: false,
+      jumpTimer: 0
+    };
+
+    function addXP(amount) {
+      state.xp += amount;
+      const targetXP = state.level * 120;
+      if (state.xp >= targetXP) {
+        state.xp -= targetXP;
+        state.level++;
+        state.skillPoints++;
+        audio.playFanfare();
+        showBanner(`🌟 LEVEL UP! You reached Level ${state.level}! (+1 Skill Point)`);
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('GoldDiggerNikhilSave', JSON.stringify({
+        money: state.money,
+        xp: state.xp,
+        level: state.level,
+        skillPoints: state.skillPoints,
+        maxDepthReached: state.maxDepthReached,
+        maxEnergy: state.maxEnergy,
+        bagCapacity: state.bagCapacity,
+        toolIndex: state.toolIndex,
+        toolHoneLevel: state.toolHoneLevel,
+        skillMagnet: state.skillMagnet,
+        skillVein: state.skillVein,
+        skillStamina: state.skillStamina,
+        skillCrit: state.skillCrit,
+        dynamiteCount: state.dynamiteCount,
+        warpCount: state.warpCount,
+        unlockedOutfits: state.unlockedOutfits,
+        outfitIndex: state.outfitIndex,
+        hasPet: state.hasPet,
+        petType: state.petType,
+        currentGraphicsMode: currentGraphicsMode,
+        soundMode: audio.soundMode,
+        bgmTrack: audio.bgmTrack,
+        gameDifficulty: gameDifficulty
+      }));
+    }
+
+    function loadSave() {
+      const saved = localStorage.getItem('GoldDiggerNikhilSave');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          Object.assign(state, parsed);
+          if (parsed.currentGraphicsMode) currentGraphicsMode = parsed.currentGraphicsMode;
+          if (parsed.soundMode) audio.soundMode = parsed.soundMode;
+          if (parsed.bgmTrack) audio.bgmTrack = parsed.bgmTrack;
+          if (parsed.gameDifficulty) gameDifficulty = parsed.gameDifficulty;
+        } catch(e) {}
+      }
+    }
+
+    /* =========================================================================
+       5. INPUT HANDLING (Pure Swipe/Drag + PC Keyboard)
+       ========================================================================= */
+    const keys = {};
+    window.addEventListener('keydown', (e) => {
+      audio.init();
+      keys[e.key.toLowerCase()] = true;
+      if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    let touchStartX = 0, touchStartY = 0, isDragging = false;
+    canvas.addEventListener('touchstart', (e) => {
+      audio.init();
+      isDragging = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      const th = 22;
+
+      keys['arrowleft'] = false; keys['arrowright'] = false;
+      keys['arrowup'] = false; keys['arrowdown'] = false;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > th) keys['arrowright'] = true;
+        else if (dx < -th) keys['arrowleft'] = true;
+      } else {
+        if (dy > th) keys['arrowdown'] = true;
+        else if (dy < -th) keys['arrowup'] = true;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+      keys['arrowleft'] = false; keys['arrowright'] = false;
+      keys['arrowup'] = false; keys['arrowdown'] = false;
+    });
+
+    /* =========================================================================
+       6. CORE GAMEPLAY ENGINE
+       ========================================================================= */
+    function showBanner(text) {
+      const el = document.getElementById('banner');
+      el.textContent = text;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function update() {
+      handleMovement();
+      updateFallingBoulders();
+      updatePet();
+      updatePools();
+      updateCamera();
+      updateHUD();
+      checkSurfaceRest();
+    }
+
+    function handleMovement() {
+      const targetVisualX = player.gx * TILE_SIZE;
+      let targetVisualY = player.gy * TILE_SIZE;
+
+      if (player.isJumping) {
+        player.jumpTimer++;
+        const jumpOffset = Math.sin((player.jumpTimer / 14) * Math.PI) * 28;
+        targetVisualY -= jumpOffset;
+        if (player.jumpTimer >= 14) {
+          player.isJumping = false;
+        }
+      }
+
+      player.visualX += (targetVisualX - player.visualX) * 0.32;
+      player.visualY += (targetVisualY - player.visualY) * 0.32;
+
+      if (player.happyTimer > 0) player.happyTimer--;
+      if (state.screenShake > 0) state.screenShake *= 0.85;
+
+      if (state.comboTimer > 0) {
+        state.comboTimer--;
+      } else {
+        state.combo = 0;
+      }
+
+      if (player.moveCooldown > 0) {
+        player.moveCooldown--;
+        return;
+      }
+
+      const curTile = getTile(player.gx, player.gy);
+      player.isClimbing = (curTile === TILES.LADDER);
+
+      const belowTile = getTile(player.gx, player.gy + 1);
+      if (!isSolid(belowTile) && belowTile !== TILES.LADDER && !player.isClimbing && !player.isDigging && !player.isJumping) {
+        player.gy++;
+        player.moveCooldown = 6;
+        return;
+      }
+
+      if (player.isDigging) {
+        const curTool = TOOLS[state.toolIndex];
+        const honeBonus = 1 + (state.toolHoneLevel * 0.1);
+        player.digProgress += 0.05 * curTool.baseSpeed * honeBonus;
+        player.armAngle = Math.sin(player.digProgress * Math.PI * 4) * 0.8;
+
+        if (player.digProgress >= 1.0) {
+          finishDigging();
+        }
+        return;
+      }
+
+      let dx = 0, dy = 0;
+      if (keys['arrowleft'] || keys['a']) dx = -1;
+      else if (keys['arrowright'] || keys['d']) dx = 1;
+      else if (keys['arrowdown'] || keys['s']) dy = 1;
+      else if (keys['arrowup'] || keys['w']) dy = -1;
+      else if (keys[' ']) {
+        if (!player.isJumping && !isSolid(getTile(player.gx, player.gy - 1))) {
+          player.isJumping = true;
+          player.jumpTimer = 0;
+          player.gy = Math.max(0, player.gy - 1);
+          player.moveCooldown = 12;
+          audio.playJump();
+          return;
+        }
+      }
+
+      if (dx === 0 && dy === 0) {
+        player.armAngle = 0;
+        return;
+      }
+
+      if (dx !== 0) player.facing = dx;
+
+      const targetGX = player.gx + dx;
+      const targetGY = player.gy + dy;
+      const targetTile = getTile(targetGX, targetGY);
+
+      if (!isSolid(targetTile)) {
+        if (dy === -1 && !player.isClimbing && targetTile !== TILES.LADDER) {
+          return;
+        }
+        player.gx = targetGX;
+        player.gy = targetGY;
+        player.moveCooldown = 7;
+        return;
+      }
+
+      if (targetTile === TILES.BOULDER) {
+        if (dx !== 0 && dy === 0) {
+          const pushX = targetGX + dx;
+          if (!isSolid(getTile(pushX, targetGY))) {
+            setTile(pushX, targetGY, TILES.BOULDER);
+            setTile(targetGX, targetGY, TILES.AIR);
+            player.gx = targetGX;
+            audio.playRumble();
+            player.moveCooldown = 12;
+          }
+        }
+        return;
+      }
+
+      if (state.energy <= 0) {
+        showBanner("⚡ Exhausted! Climb to surface camp to rest!");
+        return;
+      }
+      if (state.inventory.length >= state.bagCapacity && (ORE_DATA[targetTile] || targetTile === TILES.DIRT_FOSSIL)) {
+        showBanner("🎒 Backpack is full! Climb up to sell!");
+        return;
+      }
+
+      player.isDigging = true;
+      player.digProgress = 0;
+      player.digTarget = { gx: targetGX, gy: targetGY, tile: targetTile, isVertical: (dy !== 0) };
+      audio.playClink();
+      state.screenShake = 3.5;
+    }
+
+    function finishDigging() {
+      player.isDigging = false;
+      if (!player.digTarget) return;
+
+      const { gx, gy, tile, isVertical } = player.digTarget;
+      player.digTarget = null;
+      player.moveCooldown = 6;
+
+      // Energy calculation taking skill discount into account
+      const staminaDiscount = 1 - (state.skillStamina * 0.08);
+      const baseEnergyCost = (gameDifficulty === 'hardcore') ? 2.0 : (gameDifficulty === 'casual' ? 0.6 : 1.2);
+      state.energy = Math.max(0, state.energy - (baseEnergyCost * staminaDiscount));
+
+      spawnParticles(gx * TILE_SIZE + TILE_SIZE/2, gy * TILE_SIZE + TILE_SIZE/2, '#8d6e63');
+      audio.playClink();
+      addXP(6);
+
+      // Loot Roll
+      if (ORE_DATA[tile]) {
+        const item = ORE_DATA[tile];
+        const isCrit = Math.random() < (state.skillCrit * 0.06);
+        const finalValue = isCrit ? Math.floor(item.value * 1.8) : item.value;
+
+        state.inventory.push({ name: item.name, value: finalValue, color: item.shine });
+        spawnPopup(gx * TILE_SIZE, gy * TILE_SIZE, isCrit ? `CRIT! +${item.name}` : `+${item.name}`, item.shine);
+        audio.playGem();
+        player.happyTimer = 40;
+        addXP(15);
+        triggerCombo();
+      } else if (tile === TILES.DIRT_FOSSIL) {
+        const junk = JUNK_ITEMS[Math.floor(Math.random() * JUNK_ITEMS.length)];
+        state.inventory.push({ name: junk.name, value: junk.value, color: '#ffcc80' });
+        spawnPopup(gx * TILE_SIZE, gy * TILE_SIZE, `${junk.icon} Found: ${junk.name}!`, '#ffb74d');
+        audio.playGem();
+        player.happyTimer = 45;
+        addXP(25);
+        triggerCombo();
+      }
+
+      if (isVertical) {
+        setTile(gx, gy, TILES.LADDER);
+        setTile(player.gx, player.gy, TILES.LADDER);
+      } else {
+        setTile(gx, gy, TILES.AIR);
+      }
+
+      player.gx = gx;
+      player.gy = gy;
+
+      const currentDepth = Math.max(0, gy - SURFACE_ROW);
+      state.depth = currentDepth;
+      if (currentDepth > state.maxDepthReached) {
+        state.maxDepthReached = currentDepth;
+        if (state.maxDepthReached % 25 === 0) {
+          audio.playFanfare();
+          showBanner(`🎉 Milestone Reached: Depth ${state.maxDepthReached}m!`);
+        }
+      }
+    }
+
+    function triggerCombo() {
+      state.combo++;
+      state.comboTimer = 140;
+      if (state.combo > 1) {
+        const bonus = state.combo * 3;
+        state.money += bonus;
+        spawnPopup(player.visualX, player.visualY - 20, `${state.combo}x COMBO! +$${bonus}`, '#ffe57f');
+      }
+    }
+
+    function updateFallingBoulders() {
+      const radius = 8;
+      for (let dy = radius; dy >= -radius; dy--) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const gx = player.gx + dx;
+          const gy = player.gy + dy;
+          if (getTile(gx, gy) === TILES.BOULDER) {
+            if (getTile(gx, gy + 1) === TILES.AIR) {
+              setTile(gx, gy, TILES.AIR);
+              setTile(gx, gy + 1, TILES.BOULDER);
+              if (player.gx === gx && player.gy === gy + 1) {
+                state.energy = Math.max(0, state.energy - 22);
+                state.screenShake = 10;
+                audio.playRumble();
+                showBanner("💥 Ouch! Hit by falling rock!");
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function updatePet() {
+      if (!state.hasPet) return;
+      state.petTimer++;
+      if (state.petTimer > 320) {
+        state.petTimer = 0;
+        let bonus = Math.floor(18 + Math.random() * 24);
+        if (state.petType === 'mole') bonus = Math.floor(30 + Math.random() * 30);
+        state.money += bonus;
+        spawnPopup(player.visualX + 24, player.visualY - 14, `🐾 Pet Dug Up +$${bonus}`, '#80deea');
+        audio.playGem();
+      }
+    }
+
+    function checkSurfaceRest() {
+      if (player.gy <= SURFACE_ROW) {
+        if (state.energy < state.maxEnergy) {
+          state.energy = Math.min(state.maxEnergy, state.energy + 0.6);
+        }
+      }
+    }
+
+    function updatePools() {
+      for (let i = 0; i < MAX_PARTICLES; i++) {
+        const p = particlePool[i];
+        if (p.active) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.22;
+          p.life -= 0.035;
+          if (p.life <= 0) p.active = false;
+        }
+      }
+      for (let i = 0; i < MAX_POPUPS; i++) {
+        const pop = popupPool[i];
+        if (pop.active) {
+          pop.y += pop.vy;
+          pop.alpha -= 0.016;
+          if (pop.alpha <= 0) pop.active = false;
+        }
+      }
+    }
+
+    function updateCamera() {
+      const targetCamX = player.visualX + TILE_SIZE / 2 - canvas.width / 2;
+      const targetCamY = player.visualY + TILE_SIZE / 2 - canvas.height / 2;
+
+      state.camX += (targetCamX - state.camX) * 0.16;
+      state.camY += (targetCamY - state.camY) * 0.16;
+
+      if (state.screenShake > 0.5) {
+        state.camX += (Math.random() - 0.5) * state.screenShake;
+        state.camY += (Math.random() - 0.5) * state.screenShake;
+      }
+    }
+
+    function updateHUD() {
+      document.getElementById('hud-money').textContent = state.money;
+      document.getElementById('hud-level').textContent = state.level;
+      document.getElementById('hud-depth').textContent = `${state.depth}m`;
+      document.getElementById('hud-bag').textContent = `${state.inventory.length}/${state.bagCapacity}`;
+      const energyPct = (state.energy / state.maxEnergy) * 100;
+      document.getElementById('hud-energy-fill').style.width = `${energyPct}%`;
+
+      const xpTarget = state.level * 120;
+      const xpPct = (state.xp / xpTarget) * 100;
+      document.getElementById('hud-xp-fill').style.width = `${xpPct}%`;
+    }
+
+    /* =========================================================================
+       7. GRAPHICS RENDERING (High Fidelity Cartoon Engine)
+       ========================================================================= */
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(-Math.floor(state.camX), -Math.floor(state.camY));
+
+      renderSkyAndSurface();
+      renderWorldTiles();
+      renderMinerCharacter();
+      renderPet();
+      renderPools();
+      renderOptimizedLighting();
+
+      ctx.restore();
+    }
+
+    function renderSkyAndSurface() {
+      const skyGrad = ctx.createLinearGradient(0, -900, 0, SURFACE_ROW * TILE_SIZE);
+      skyGrad.addColorStop(0, '#38bdf8');
+      skyGrad.addColorStop(0.7, '#7dd3fc');
+      skyGrad.addColorStop(1, '#fef08a');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(state.camX - 200, -900, canvas.width + 400, SURFACE_ROW * TILE_SIZE + 900);
+
+      // Cartoon Sun
+      ctx.beginPath();
+      ctx.arc(80, -220, 50, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fill();
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#eab308';
+      ctx.stroke();
+
+      drawCampTent(Math.floor(WORLD_COLS/2 + 2) * TILE_SIZE, SURFACE_ROW * TILE_SIZE);
+      drawCampfire(Math.floor(WORLD_COLS/2 - 3) * TILE_SIZE, SURFACE_ROW * TILE_SIZE);
+    }
+
+    function drawCampTent(x, y) {
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y);
+      ctx.lineTo(x + 50, y - 72);
+      ctx.lineTo(x + 120, y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(x + 15, y);
+      ctx.lineTo(x + 50, y - 72);
+      ctx.lineTo(x + 85, y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(x + 25, y - 90, 54, 20);
+      ctx.fillStyle = '#3e2723';
+      ctx.font = 'bold 11px Arial';
+      ctx.fillText("CAMP", x + 34, y - 76);
+    }
+
+    function drawCampfire(x, y) {
+      ctx.fillStyle = '#4e342e';
+      ctx.fillRect(x, y - 6, 26, 6);
+      const fl = Math.sin(Date.now() * 0.015) * 4;
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.arc(x + 13, y - 12 + fl, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(x + 13, y - 10 + fl, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function renderWorldTiles() {
+      const startCol = Math.max(0, Math.floor(state.camX / TILE_SIZE) - 1);
+      const endCol = Math.min(WORLD_COLS - 1, Math.ceil((state.camX + canvas.width) / TILE_SIZE) + 1);
+      const startRow = Math.max(SURFACE_ROW, Math.floor(state.camY / TILE_SIZE) - 1);
+      const endRow = Math.min(WORLD_ROWS - 1, Math.ceil((state.camY + canvas.height) / TILE_SIZE) + 1);
+
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          const tile = worldGrid[r][c];
+          const px = c * TILE_SIZE;
+          const py = r * TILE_SIZE;
+
+          if (tile === TILES.AIR) continue;
+
+          if (tileCache[tile]) {
+            ctx.drawImage(tileCache[tile], px, py);
+          }
+
+          if (r === SURFACE_ROW && isSolid(tile)) {
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(px, py, TILE_SIZE, 6);
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(px, py + 6, TILE_SIZE, 2);
+          }
+        }
+      }
+    }
+
+    function renderMinerCharacter() {
+      ctx.save();
+      ctx.translate(player.visualX + TILE_SIZE/2, player.visualY + TILE_SIZE/2);
+      if (player.facing === -1) ctx.scale(-1, 1);
+
+      const outfit = OUTFITS[state.outfitIndex];
+
+      // Heavy Boots
+      ctx.fillStyle = '#2d1810';
+      ctx.fillRect(-10, 20, 9, 7);
+      ctx.fillRect(1, 20, 9, 7);
+      ctx.fillStyle = '#4a3728';
+      ctx.fillRect(-10, 25, 9, 2);
+      ctx.fillRect(1, 25, 9, 2);
+
+      // Trousers
+      ctx.fillStyle = outfit.pants;
+      ctx.fillRect(-9, 10, 8, 12);
+      ctx.fillRect(1, 10, 8, 12);
+
+      // Knee Patches
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(-8, 14, 6, 5);
+      ctx.fillRect(2, 14, 6, 5);
+
+      // Torso & Attire Customization
+      if (outfit.type === 'dive_helmet') {
+        ctx.fillStyle = outfit.shirt;
+        ctx.fillRect(-10, -3, 20, 14);
+        ctx.fillStyle = '#b0bec5';
+        ctx.fillRect(-8, 2, 16, 4);
+      } else if (outfit.type === 'fire_armor') {
+        ctx.fillStyle = outfit.shirt;
+        ctx.fillRect(-11, -3, 22, 14);
+        ctx.fillStyle = '#ff3d00';
+        ctx.fillRect(-13, -4, 5, 8);
+        ctx.fillRect(8, -4, 5, 8);
+      } else {
+        ctx.fillStyle = outfit.shirt;
+        ctx.fillRect(-10, -3, 20, 14);
+        ctx.fillStyle = outfit.pants;
+        ctx.fillRect(-8, 3, 16, 8);
+        ctx.fillStyle = '#ffd54f';
+        ctx.fillRect(-6, 4, 3, 3);
+        ctx.fillRect(3, 4, 3, 3);
+        ctx.fillStyle = '#1565c0';
+        ctx.fillRect(-4, 6, 8, 4);
+      }
+
+      // Head & Face
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -11, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bushy Beard
+      ctx.fillStyle = outfit.beard;
+      ctx.beginPath();
+      ctx.arc(2, -7, 8, 0, Math.PI * 0.85);
+      ctx.fill();
+
+      // Expressive Eyes with Specular Sparkle
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(4, -13, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(5, -13, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(6, -14, 0.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Helmet Styles
+      if (outfit.type === 'dive_helmet') {
+        ctx.fillStyle = outfit.hat;
+        ctx.beginPath();
+        ctx.arc(0, -14, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd54f';
+        ctx.beginPath();
+        ctx.arc(4, -13, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#81d4fa';
+        ctx.beginPath();
+        ctx.arc(4, -13, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (outfit.type === 'cyber_visor') {
+        ctx.fillStyle = outfit.hat;
+        ctx.fillRect(-12, -22, 24, 12);
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillRect(-2, -16, 12, 5);
+      } else {
+        ctx.fillStyle = outfit.hat;
+        ctx.beginPath();
+        ctx.arc(0, -15, 13, Math.PI, 0);
+        ctx.fill();
+        ctx.fillRect(-13, -16, 26, 4);
+
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(9, -18, 6, 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(13, -17, 2, 4);
+      }
+
+      // Modular Tool in Hand
+      ctx.save();
+      ctx.translate(5, 5);
+      ctx.rotate(player.armAngle);
+      drawActiveTool();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawActiveTool() {
+      const tool = TOOLS[state.toolIndex];
+
+      if (tool.tier <= 4) {
+        ctx.fillStyle = '#7a3e1d';
+        ctx.fillRect(-2, -4, 26, 6);
+        ctx.fillStyle = '#a0522d';
+        ctx.fillRect(-2, -3, 26, 2);
+
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(16, -6, 5, 10);
+
+        let pickColor = '#4a6572';
+        let highlightColor = '#ecf0f1';
+        if (tool.tier === 2) { pickColor = '#78909c'; highlightColor = '#ffffff'; }
+        if (tool.tier === 3) { pickColor = '#37474f'; highlightColor = '#90a4ae'; }
+        if (tool.tier === 4) { pickColor = '#fbc02d'; highlightColor = '#fff59d'; }
+
+        ctx.fillStyle = pickColor;
+        ctx.beginPath();
+        ctx.moveTo(14, -16);
+        ctx.quadraticCurveTo(28, -6, 28, 0);
+        ctx.quadraticCurveTo(28, 6, 14, 16);
+        ctx.lineTo(19, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = highlightColor;
+        ctx.beginPath();
+        ctx.moveTo(16, -14);
+        ctx.lineTo(26, 0);
+        ctx.lineTo(23, 0);
+        ctx.lineTo(16, -10);
+        ctx.closePath();
+        ctx.fill();
+
+        drawStarSparkle(ctx, 26, -4, 4);
+      } else if (tool.tier === 5) {
+        ctx.fillStyle = '#455a64';
+        ctx.fillRect(0, -6, 16, 12);
+        ctx.fillStyle = '#00bcd4';
+        ctx.beginPath();
+        ctx.moveTo(16, -10);
+        ctx.lineTo(34, 0);
+        ctx.lineTo(16, 10);
+        ctx.closePath();
+        ctx.fill();
+        drawStarSparkle(ctx, 32, -2, 4);
+      } else {
+        ctx.fillStyle = '#263238';
+        ctx.fillRect(0, -7, 18, 14);
+        ctx.fillStyle = (tool.tier === 6) ? '#e040fb' : '#00e5ff';
+        ctx.fillRect(18, -4, 16, 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(34, -2, 8, 4);
+      }
+    }
+
+    function renderPet() {
+      if (!state.hasPet) return;
+      const petX = player.visualX - player.facing * 28 + TILE_SIZE/2;
+      const petY = player.visualY + TILE_SIZE/2 + 8;
+      ctx.save();
+      ctx.translate(petX, petY);
+      ctx.fillStyle = (state.petType === 'mole') ? '#5d4037' : '#fb923c';
+      ctx.beginPath();
+      ctx.arc(0, 0, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#c2410c';
+      ctx.beginPath();
+      ctx.arc(-4, -8, 4, 0, Math.PI * 2);
+      ctx.arc(4, -8, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function renderPools() {
+      for (let i = 0; i < MAX_PARTICLES; i++) {
+        const p = particlePool[i];
+        if (p.active) {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.life;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1.0;
+
+      for (let i = 0; i < MAX_POPUPS; i++) {
+        const pop = popupPool[i];
+        if (pop.active) {
+          ctx.fillStyle = pop.color;
+          ctx.globalAlpha = Math.max(0, pop.alpha);
+          ctx.font = 'bold 15px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(pop.text, pop.x, pop.y);
+        }
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    function renderOptimizedLighting() {
+      if (player.gy <= SURFACE_ROW) return;
+
+      const px = player.visualX + TILE_SIZE/2;
+      const py = player.visualY + TILE_SIZE/2;
+      const lightRadius = 170 + (state.toolIndex * 15) + (state.lanternOilTimer > 0 ? 80 : 0);
+
+      const radGrad = ctx.createRadialGradient(px, py, 40, px, py, lightRadius);
+      radGrad.addColorStop(0, 'rgba(0,0,0,0.0)');
+      radGrad.addColorStop(0.75, 'rgba(4,6,10,0.4)');
+      radGrad.addColorStop(1, 'rgba(4,6,10,0.92)');
+
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(px - 700, py - 700, 1400, 1400);
+    }
+
+    /* =========================================================================
+       8. PLAY-STORE QUALITY HUB & COMPLETE ECONOMY
+       ========================================================================= */
+    function openMenu(tab = 'tools') {
+      document.getElementById('game-modal').style.display = 'flex';
+      switchTab(tab);
+    }
+    function closeMenu() {
+      document.getElementById('game-modal').style.display = 'none';
+      saveGame();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.toLowerCase().includes(tab));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const container = document.getElementById('modal-tab-content');
+      container.innerHTML = '';
+
+      if (tab === 'tools') renderToolsTab(container);
+      else if (tab === 'supplies') renderSuppliesTab(container);
+      else if (tab === 'perks') renderSkillsTab(container);
+      else if (tab === 'inventory') renderInventoryTab(container);
+      else if (tab === 'outfits') renderOutfitsTab(container);
+      else if (tab === 'settings') renderSettingsTab(container);
+    }
+
+    /* PICKAXES & DRILLS TAB */
+    function renderToolsTab(container) {
+      const curTool = TOOLS[state.toolIndex];
+      const honeCost = Math.floor(60 * Math.pow(1.5, state.toolHoneLevel));
+      const nextTool = TOOLS[state.toolIndex + 1];
+
+      container.innerHTML = `
+        <div style="background:rgba(255,213,79,0.08); border:1.5px solid rgba(255,213,79,0.3); border-radius:14px; padding:12px; margin-bottom:14px;">
+          <h3 style="color:#ffd54f; font-size:16px; margin-bottom:4px;">${curTool.name} (Rank ${state.toolIndex + 1})</h3>
+          <p style="font-size:12px; color:#cfd8dc;">Sharpen Level: <strong>+${state.toolHoneLevel}/10</strong> • Base Speed: <strong>${curTool.baseSpeed}x</strong></p>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            ${state.toolHoneLevel < 10 ?
+              `<button class="btn-buy" onclick="honeTool(${honeCost})">Hone Blade ($${honeCost})</button>` :
+              `<span style="color:#4caf50; font-weight:800; font-size:12px;">BLADE FULLY SHARPENED</span>`}
+          </div>
+        </div>
+
+        <h4 style="color:#ffd54f; margin-bottom:10px; font-size:14px;">Unlock New Mining Equipment</h4>
+      `;
+
+      TOOLS.forEach((tool, idx) => {
+        if (idx === 0) return;
+        const isOwned = state.toolIndex >= idx;
+        const canBuy = state.toolIndex === idx - 1;
+
+        const card = document.createElement('div');
+        card.className = 'card-item';
+        card.innerHTML = `
+          <div class="card-info">
+            <h4>${tool.name}</h4>
+            <p>Dig Speed: <strong>${tool.baseSpeed}x</strong> • Power: <strong>${tool.basePower}</strong></p>
+          </div>
+          ${isOwned ? `<span style="color:#4caf50; font-weight:800; font-size:11px;">OWNED</span>` :
+            (canBuy ? `<button class="btn-buy" onclick="buyNewTool(${idx}, ${tool.cost})">Buy $${tool.cost}</button>` :
+            `<span style="color:#78909c; font-size:11px;">LOCKED</span>`)}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /* SUPPLIES & PET KENNEL TAB */
+    function renderSuppliesTab(container) {
+      const bagCost = Math.floor(120 * Math.pow(1.6, (state.bagCapacity - 12) / 4));
+      const energyCost = Math.floor(100 * Math.pow(1.4, (state.maxEnergy - 100) / 25));
+
+      container.innerHTML = `
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Backpack Expansion (+4 Slots)</h4>
+            <p>Current Capacity: <strong>${state.bagCapacity} slots</strong></p>
+          </div>
+          <button class="btn-buy" onclick="buyBag(${bagCost})">Expand $${bagCost}</button>
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Stamina Endurance (+25 Energy)</h4>
+            <p>Max Stamina: <strong>${state.maxEnergy} Energy</strong></p>
+          </div>
+          <button class="btn-buy" onclick="buyEnergy(${energyCost})">Train $${energyCost}</button>
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Dynamite Blast Charge (x1)</h4>
+            <p>Carried: <strong>${state.dynamiteCount}</strong> • Blasts a 3x3 cavern void</p>
+          </div>
+          <button class="btn-buy" onclick="buyDynamite(150)">Buy $150</button>
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Teleport Warp Stone</h4>
+            <p>Carried: <strong>${state.warpCount}</strong> • Instantly warps you back to camp</p>
+          </div>
+          <button class="btn-buy" onclick="buyWarpStone(300)">Buy $300</button>
+        </div>
+
+        <h4 style="color:#ffd54f; margin:14px 0 8px 0; font-size:14px;">Pet Companion Kennel</h4>
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Treasure Terrier</h4>
+            <p>Digs up coins, ancient relics, and surface fossils.</p>
+          </div>
+          ${state.hasPet && state.petType === 'terrier' ? `<span style="color:#4caf50; font-weight:800; font-size:11px;">ACTIVE</span>` :
+            `<button class="btn-buy" onclick="adoptPet('terrier', 800)">Adopt $800</button>`}
+        </div>
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Gold Gem Mole</h4>
+            <p>Sniffs out rare gemstones and high-yield ores.</p>
+          </div>
+          ${state.hasPet && state.petType === 'mole' ? `<span style="color:#4caf50; font-weight:800; font-size:11px;">ACTIVE</span>` :
+            `<button class="btn-buy" onclick="adoptPet('mole', 2200)">Adopt $2,200</button>`}
+        </div>
+      `;
+    }
+
+    /* SKILLS & LEVELING PERKS TAB */
+    function renderSkillsTab(container) {
+      container.innerHTML = `
+        <div style="background:rgba(46,204,113,0.08); border:1.5px solid rgba(46,204,113,0.3); border-radius:14px; padding:12px; margin-bottom:14px;">
+          <h3 style="color:#2ecc71; font-size:15px; margin-bottom:2px;">Character Level: ${state.level}</h3>
+          <p style="font-size:12px; color:#cfd8dc;">Available Skill Points: <strong style="color:#ffd54f;">${state.skillPoints}</strong></p>
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Stamina Metabolism (Rank ${state.skillStamina}/5)</h4>
+            <p>Reduces stamina cost per swing by 8% per rank.</p>
+          </div>
+          ${state.skillStamina < 5 ? `<button class="btn-buy" onclick="upgradeSkill('skillStamina')">Upgrade (1 Pt)</button>` : `<span style="color:#4caf50; font-weight:800; font-size:11px;">MAX</span>`}
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Critical Strike (Rank ${state.skillCrit}/5)</h4>
+            <p>Chance to strike 1.8x value on gems and chests (+6% per rank).</p>
+          </div>
+          ${state.skillCrit < 5 ? `<button class="btn-buy" onclick="upgradeSkill('skillCrit')">Upgrade (1 Pt)</button>` : `<span style="color:#4caf50; font-weight:800; font-size:11px;">MAX</span>`}
+        </div>
+
+        <div class="card-item">
+          <div class="card-info">
+            <h4>Vein Prospector (Rank ${state.skillVein}/5)</h4>
+            <p>Increases high-tier ore generation frequency by 10%.</p>
+          </div>
+          ${state.skillVein < 5 ? `<button class="btn-buy" onclick="upgradeSkill('skillVein')">Upgrade (1 Pt)</button>` : `<span style="color:#4caf50; font-weight:800; font-size:11px;">MAX</span>`}
+        </div>
+      `;
+    }
+
+    /* INVENTORY & SELL ALL TAB */
+    function renderInventoryTab(container) {
+      let totalValue = state.inventory.reduce((sum, item) => sum + item.value, 0);
+      let listHtml = state.inventory.map(item => `
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.08);">
+          <span style="color:${item.color || '#fff'}">${item.name}</span>
+          <span style="color:#ffd54f;">+$${item.value}</span>
+        </div>
+      `).join('');
+
+      if (state.inventory.length === 0) {
+        listHtml = `<p style="color:#94a3b8; text-align:center; padding:20px 0;">Backpack is empty. Dig down to collect gems & relics!</p>`;
+      }
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div><strong>Total Valuables:</strong> $${totalValue}</div>
+          <button class="btn-buy" onclick="sellAllInventory()">Sell All</button>
+        </div>
+        <div style="max-height:240px; overflow-y:auto;">${listHtml}</div>
+      `;
+    }
+
+    /* WARDROBE TAB */
+    function renderOutfitsTab(container) {
+      container.innerHTML = OUTFITS.map((outfit, idx) => {
+        const isUnlocked = state.unlockedOutfits.includes(outfit.id);
+        const isEquipped = state.outfitIndex === idx;
+
+        return `
+          <div class="card-item">
+            <div class="card-info">
+              <h4>${outfit.name}</h4>
+              <p>Custom helmet, attire rig, and gear styling.</p>
+            </div>
+            ${isEquipped ? `<span style="color:#4caf50; font-weight:800; font-size:11px;">EQUIPPED</span>` :
+              (isUnlocked ? `<button class="btn-buy" onclick="equipOutfit(${idx})">Wear</button>` :
+              `<button class="btn-buy" onclick="unlockOutfit('${outfit.id}',${outfit.cost}, ${idx})">Unlock $${outfit.cost}</button>`)}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* SETTINGS & AUDIO CONTROLS TAB */
+    function renderSettingsTab(container) {
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Graphics Preset</span>
+            <button class="btn-buy" onclick="cycleGraphicsMode()">${currentGraphicsMode.toUpperCase()}</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Game Difficulty</span>
+            <button class="btn-buy" onclick="cycleDifficulty()">${gameDifficulty.toUpperCase()}</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Background Music</span>
+            <button class="btn-buy" onclick="toggleBGM()">${audio.bgmEnabled ? audio.bgmTrack.toUpperCase() : 'MUTED'}</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Pickaxe Sound Style</span>
+            <button class="btn-buy" onclick="cycleSoundMode()">${audio.soundMode.toUpperCase()}</button>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:14px; border-radius:12px;">
+            <h4 style="color:#ffd54f; margin-bottom:6px;">Miner Records</h4>
+            <p>Deepest Depth: <strong>${state.maxDepthReached}m</strong></p>
+            <p>Total Gold Earned: <strong>$${state.money}</strong></p>
+            <p>Character Level: <strong>Lv.${state.level}</strong></p>
+          </div>
+          <div style="text-align:center; margin-top:14px; padding:12px; background:rgba(0,0,0,0.3); border-radius:12px;">
+            <p style="font-size:15px; color:#ffd54f; font-weight:800; margin-bottom:4px;">Credit goes to Nikhil</p>
+            <p style="font-size:12px; color:#94a3b8;">Made on 23 September 2026</p>
+          </div>
+        </div>
+      `;
+    }
+
+    /* TRANSACTION ACTIONS */
+    window.honeTool = function(cost) {
+      if (state.money >= cost && state.toolHoneLevel < 10) {
+        state.money -= cost;
+        state.toolHoneLevel++;
+        audio.playFanfare();
+        switchTab('tools');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.buyNewTool = function(idx, cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.toolIndex = idx;
+        state.toolHoneLevel = 0;
+        audio.playFanfare();
+        switchTab('tools');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.buyBag = function(cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.bagCapacity += 4;
+        audio.playFanfare();
+        switchTab('supplies');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.buyEnergy = function(cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.maxEnergy += 25;
+        state.energy = state.maxEnergy;
+        audio.playFanfare();
+        switchTab('supplies');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.buyDynamite = function(cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.dynamiteCount++;
+        audio.playFanfare();
+        switchTab('supplies');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.buyWarpStone = function(cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.warpCount++;
+        audio.playFanfare();
+        switchTab('supplies');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.adoptPet = function(type, cost) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.hasPet = true;
+        state.petType = type;
+        audio.playFanfare();
+        switchTab('supplies');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.upgradeSkill = function(skillKey) {
+      if (state.skillPoints >= 1) {
+        state.skillPoints--;
+        state[skillKey]++;
+        audio.playFanfare();
+        switchTab('perks');
+      }
+    };
+
+    window.unlockOutfit = function(id, cost, idx) {
+      if (state.money >= cost) {
+        state.money -= cost;
+        state.unlockedOutfits.push(id);
+        state.outfitIndex = idx;
+        audio.playFanfare();
+        switchTab('outfits');
+      } else {
+        showBanner("Need more gold!");
+      }
+    };
+
+    window.equipOutfit = function(idx) {
+      state.outfitIndex = idx;
+      switchTab('outfits');
+    };
+
+    window.sellAllInventory = function() {
+      if (state.inventory.length === 0) return;
+      const sum = state.inventory.reduce((acc, cur) => acc + cur.value, 0);
+      state.money += sum;
+      state.inventory = [];
+      audio.playGem();
+      spawnPopup(player.visualX, player.visualY - 30, `Sold all for +$${sum}!`, '#4caf50');
+      switchTab('inventory');
+    };
+
+    window.cycleGraphicsMode = function() {
+      const idx = (GRAPHICS_MODES.indexOf(currentGraphicsMode) + 1) % GRAPHICS_MODES.length;
+      currentGraphicsMode = GRAPHICS_MODES[idx];
+      prebakeTileTextures();
+      switchTab('settings');
+    };
+
+    window.cycleDifficulty = function() {
+      const diffs = ['casual', 'adventurer', 'hardcore'];
+      const idx = (diffs.indexOf(gameDifficulty) + 1) % diffs.length;
+      gameDifficulty = diffs[idx];
+      switchTab('settings');
+    };
+
+    window.toggleBGM = function() {
+      const tracks = ['cavern', 'groove', 'ambient'];
+      if (!audio.bgmEnabled) {
+        audio.bgmEnabled = true;
+        audio.bgmTrack = 'cavern';
+      } else {
+        const curIdx = tracks.indexOf(audio.bgmTrack);
+        if (curIdx === tracks.length - 1) {
+          audio.bgmEnabled = false;
+        } else {
+          audio.bgmTrack = tracks[curIdx + 1];
+        }
+      }
+      switchTab('settings');
+    };
+
+    window.cycleSoundMode = function() {
+      const modes = ['crisp', 'heavy', 'laser'];
+      const idx = (modes.indexOf(audio.soundMode) + 1) % modes.length;
+      audio.soundMode = modes[idx];
+      audio.playClink();
+      switchTab('settings');
+    };
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function mainGameLoop() {
+      update();
+      render();
+      requestAnimationFrame(mainGameLoop);
+    }
+
+    function init() {
+      resizeCanvas();
+      loadSave();
+      prebakeTileTextures();
+      initWorldMatrix();
+      requestAnimationFrame(mainGameLoop);
+    }
+    window.onload = init;
+  </script>
+</body>
+</html>
